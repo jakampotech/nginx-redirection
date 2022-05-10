@@ -1,0 +1,56 @@
+server {
+	listen 80;
+	server_name _;
+	return      301 https://$host:9443$request_uri;
+	add_header 'Access-Control-Allow-Origin' * always;
+	root /var/www/html;
+
+location /.well-known/pki-validation {
+            alias /var/www/html/.well-known/pki-validation;
+    }
+
+}
+
+server {
+        listen 443 ssl;
+        server_name _;
+        return      301 https://$host:9443$request_uri;
+        add_header 'Access-Control-Allow-Origin' * always;
+
+	ssl on;
+        ssl_certificate /etc/nginx/ssl/certificate.crt;
+        ssl_certificate_key /etc/nginx/ssl/private.key;
+}
+
+server {
+
+        listen 9443 ssl default_server;
+        listen [::]:9443 ssl default_server;
+        ssl on;
+        ssl_certificate /etc/nginx/ssl/certificate.crt;
+        ssl_certificate_key /etc/nginx/ssl/private.key;
+
+
+############ EDIT IP SOURCE DISINI #############
+        server_name _;
+########### END OF EDIT ################
+location / {
+############ EDIT IP DESTINATION DISINI #############
+
+     proxy_pass http://domain:80;
+
+########### END OF EDIT ################
+
+    proxy_http_version  1.1;
+    proxy_cache_bypass  $http_upgrade;
+    proxy_set_header Upgrade           $http_upgrade;
+    proxy_set_header Connection        "upgrade";
+    proxy_set_header Host $host:$server_port;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host  $host;
+    proxy_set_header X-Forwarded-Port  $server_port;
+        add_header Access-Control-Allow-Origin $http_origin;
+  }
+}
